@@ -93,13 +93,13 @@ def update(dt):
     if args.manual_control:
         action = np.array([0.0, 0.0])
         if key_handler[key.UP]:
-            action = np.array([0.44, 0.0])
+            action = np.array([0.3, 0.0])
         if key_handler[key.DOWN]:
-            action = np.array([-0.44, 0])
+            action = np.array([-0.3, 0])
         if key_handler[key.LEFT]:
-            action = np.array([0.0, +1]) 
+            action = np.array([0.0, + 0.7]) 
         if key_handler[key.RIGHT]:
-            action = np.array([0.0, -1])
+            action = np.array([0.0, - 0.7])
         if key_handler[key.SPACE]:
             action = np.array([0, 0])
         # Speed boost
