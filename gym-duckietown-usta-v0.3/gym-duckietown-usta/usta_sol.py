@@ -10,26 +10,38 @@ class UstaSolution:
         self.imprimirLogro = True
         self.origenSetted = False
         self.origen = tuple()
+        self.viejaCoord = tuple()  
+        self.nuevaCoord = tuple()
+        self.viejoSentido = str()
+        self.nuevoSentido = str()
         self.colaBusqueda = list()
         self.alineamiento = False
 
-    def step_ai(self, obs, coord, dist, angle, global_angle):           
+    def step_ai(self, obs, coord, dist, angle, global_angle):                 
         objetivo = self.convertirDirACoor( str(self.target) )
         action = np.array([0.0, 0.0])                
         posActual = coord
-        velocidad = 0.6    
+        velocidad = 0.8    
         """El punto de origen sólo lo va a tomar una vez el primer fotograma cuando inicie
         el programa. Si el punto de origen se modifica cada fotograma, no podrá alcanzar
         el punto objetivo.
         """
         if not self.origenSetted:            
             self.origen = coord
-            self.origenSetted = True
             self.colaBusqueda = self.BFSSearch(self.origen, objetivo)  
+            self.origenSetted = True
 
         if not posActual == objetivo:  
-            action, self.colaBusqueda = self.ejecutarBusqueda("W", angle, global_angle, dist, velocidad) 
+            self.nuevaCoord = coord
+            if len(self.colaBusqueda) != 0:
+                action = self.ejecutarBusqueda(self.colaBusqueda[0], angle, global_angle, dist, velocidad) 
+            print(self.colaBusqueda)
+            print("Coordenada actual: ", posActual, "objetivo", objetivo)
             
+            if len(self.viejaCoord) != 0 and len(self.colaBusqueda) != 0:
+                if self.viejaCoord != self.nuevaCoord:
+                    self.colaBusqueda.pop(0)
+                    self.alineamiento = False
         else:
             action = self.acciones(angle, global_angle, dist, velocidad, "det")  
             if self.imprimirLogro:       
@@ -37,6 +49,7 @@ class UstaSolution:
                 print("¡Punto objetivo alcanzado!->", self.target, "Coord: ",objetivo)
                 self.imprimirLogro = False
         
+        self.viejaCoord = coord        
         return action 
     
     def convertirDirACoor(self, objetivo):
@@ -66,11 +79,11 @@ class UstaSolution:
         sensibilidadGiros = 0.3
         #De frente
         if accion == "frente":
-            if dist > -0.07 and dist < 0.0:
+            if dist > -0.07 and dist < -0.02:
                 if angle > 1:
-                    action = np.array([ 0.0,  + 0.2 ])
+                    action = np.array([ 0.0,  + 0.5 ])
                 elif angle < - 1:
-                    action = np.array([ 0.0,  - 0.2 ])
+                    action = np.array([ 0.0,  - 0.5 ])
                 else:
                     action = np.array([velocidad, 0.0])
 
@@ -78,7 +91,7 @@ class UstaSolution:
                 if dist < -0.070:
                     action = np.array([ 0.3,  - sensibilidadGiros])
 
-                elif dist > 0.0: 
+                elif dist > -0.02: 
                     action = np.array([ 0.3,  + sensibilidadGiros ])
 
         #Izquierda
@@ -111,7 +124,7 @@ class UstaSolution:
         if objetivo[0] == origen[0]:
             cantidad, direccion = diferencia(objetivo[1], origen[1],"S","N")
             for num in range(cantidad):
-                cola.append(direccion)    
+                cola.append(direccion)  
 
         elif objetivo[1] == origen[1]:
             cantidad, direccion = diferencia(objetivo[0], origen[0],"E","W") 
@@ -172,15 +185,12 @@ class UstaSolution:
 
         return action, self.alineamiento
 
-    def ejecutarBusqueda(self, cola, angle, global_angle, dist, velocidad):
-        action, self.alineamiento = self.orientacion(cola[0], angle, global_angle, dist, velocidad)
-        if self.alineamiento:
+    def ejecutarBusqueda(self, colaItem, angle, global_angle, dist, velocidad):
+        action, self.alineamiento = self.orientacion(colaItem, angle, global_angle, dist, velocidad)
+        if self.alineamiento:            
             action = self.acciones(angle, global_angle, dist, velocidad, "frente")
-            
-        print("dist", dist,"\nangle", angle,"\nGlobal angle:", global_angle,"\n")
-        return action, cola       
+        
+        return action      
 
 #python3 usta_test.py --map-name city_5x5_s1 --mode ai --target st5av2 
 #python3 usta_test.py --map-name city_5x5_s1 --mode ai --target av2st1 --manual-control
-# print("Coordenada actual: ", posActual)
-# print("Objetivo: ", self.target, "/ Coord. obj: ", objetivo)
